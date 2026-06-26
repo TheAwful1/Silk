@@ -9,6 +9,7 @@ namespace Silk
     {
         private static uint _vao;
         private static uint _vbo;
+        private static uint _ebo;
         private static GL _gl;
 
 
@@ -39,6 +40,7 @@ namespace Silk
         private static unsafe void OnLoad() {
             _gl = _window.CreateOpenGL();
             _gl.ClearColor(Color.CornflowerBlue);
+            //Creando y bindeando el VAO
             _vao = _gl.GenVertexArray();
             _gl.BindVertexArray(_vao);
             float[] vertices = 
@@ -48,13 +50,34 @@ namespace Silk
                 -0.5f, -0.5f, 0.0f,
                 -0.5f,  0.5f, 0.0f
                 };
+            uint[] indices =
+            {
+                0u, 1u, 3u,
+                1u, 2u, 3u
+            };
+            //GLSL
+            const string vertexCode = @"
+                    #version 330 core
+                    
+                    layout (location = 0) in vec3 aPosition;
+                    
+                    void main()
+                    {
+                        gl_Position = vec4(aPosition, 1.0);
+                    }";
+
+            //Creando y bindeando el VBO
             _vbo = _gl.GenBuffer();
             _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vbo);
             fixed (float* buf = vertices)
                 _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint) (vertices.Length * sizeof(float)), buf, BufferUsageARB.StaticDraw);
-            
+            //Creando y bindeando el EBO
+            _ebo = _gl.GenBuffer();
+            _gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, _ebo);
+            fixed (uint* buf = indices)
+                _gl.BufferData(BufferTargetARB.ElementArrayBuffer, (nuint)(indices.Length * sizeof(uint)), buf, BufferUsageARB.StaticDraw);
 
-
+            //Esto es para tomar el input del teclado
             IInputContext input = _window.CreateInput();
             for (int i = 0; i < input.Keyboards.Count; i++)
                 input.Keyboards[i].KeyDown += KeyDown;            
